@@ -8,8 +8,23 @@ t0 = 0
 hostr_v = 3.1
 dust = sncosmo.CCM89Dust()
 
-zero_point = {'f105w': 26.235, 'f140w': 26.437, 'f160w': 25.921,
-              'uvf814w': 25.0985, 'zpsys': 'ab'}
+zero_point = {'f105w_wfc3ir': 26.235, 'f140w_wfc3ir': 26.437, 'f160w': 25.921,
+              'f814w_wfc3uvis': 25.0985, 'zpsys': 'ab'}
+
+
+def filter2bandpass(filter_file):
+    """Returns the sncosmo bandpass for an HST filter"""
+    filter = np.loadtxt(filter_file)
+    wavelength = filter[:, 0]
+    transmission = filter[:, 1]
+    band = sncosmo.Bandpass(wavelength, transmission, name=filter_file[: -4])
+    sncosmo.registry.register(band, force=True)
+    return
+
+# Only have to use once
+f105w_wfc3ir = filter2bandpass('f105w_wfc3ir.dat')
+f140w_wfc3ir = filter2bandpass('f140w_wfc3ir.dat')
+f814w_wfc3uvis = filter2bandpass('f814w_wfc3uvis.dat')
 
 
 def lightcurve_Ia(filter, z, x1, c):
@@ -18,21 +33,24 @@ def lightcurve_Ia(filter, z, x1, c):
 
     zp = zero_point[filter]
     zpsys = zero_point['zpsys']
-    model_Ia = sncosmo.Model(source=sncosmo.get_source('salt2-extended',
-                                                       version='1.0'))
+    model_Ia = sncosmo.Model(source=sncosmo.get_source('salt2',
+                                                       version='2.4'))
 
     alpha = 0.12
     beta = 3.
     mabs = -19.1 - alpha*x1 + beta*c
     model_Ia.set(z=z)
-    model_Ia.set_source_peakabsmag(mabs, 'bessellb', 'ab')
+    model_Ia.set_source_peakabsmag(mabs, 'bessellb', 'vega')
     p = {'z': z, 't0': t0, 'x1': x1, 'c': c}
     model_Ia.set(**p)
     phase_array = np.linspace(model_Ia.mintime(), model_Ia.maxtime(), 100)
-    obsflux_Ia = model_Ia.bandflux(filter, phase_array, zp, zpsys)
+    obsflux_Ia = model_Ia.bandflux(filter, phase_array, zp=zp, zpsys=zpsys)
     keys = ['phase_array', 'obsflux']
     values = [phase_array, obsflux_Ia]
     dict_Ia = dict(zip(keys, values))
+    np.savetxt('test.dat', np.c_[dict_Ia['phase_array'], dict_Ia['obsflux']])
+    x0 = model_Ia.get('x0')
+    print x0
     return (dict_Ia)
 
 
