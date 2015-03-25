@@ -1,6 +1,6 @@
 import numpy as np
 import sncosmo
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt, mpld3
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 
@@ -136,9 +136,9 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
             data_flux_filter2, data_flux_filter2_err,
             data_flux_filter3, data_flux_filter3_err, phase):
 
-    all_phase0 = (dates[0] - dates[0][0] + phase)/(1+z)
-    all_phase1 = (dates[1] - dates[1][0] + phase)/(1+z)
-    all_phase2 = (dates[2] - dates[2][0] + phase)/(1+z)
+    all_phase0 = (dates[0] - dates[0][0]) + phase*(1+z)
+    all_phase1 = (dates[1] - dates[1][0]) + phase*(1+z)
+    all_phase2 = (dates[2] - dates[2][0]) + phase*(1+z)
 
     plt.figure(figsize=(3, 9))
     gs1 = gridspec.GridSpec(3, 9)
@@ -183,7 +183,7 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
     fig.set_size_inches(18.5, 12.5)
 
 
-def plot_Ibc(z, hostebv_Ibc, data_flux_filter1, data_flux_filter1_err,
+def plot_Ibc(z, hostebv_Ibc, filters, dates, data_flux_filter1, data_flux_filter1_err,
              data_flux_filter2, data_flux_filter2_err,
              data_flux_filter3, data_flux_filter3_err, phase):
     model_Ibc = ['s11-2005hl', 's11-2005hm', 's11-2006fo', 'nugent-sn1bc',
@@ -200,6 +200,9 @@ def plot_Ibc(z, hostebv_Ibc, data_flux_filter1, data_flux_filter1_err,
     #         (0.8, 0.7254901960784313, 0.4549019607843137),
     #          (0.39215686274509803, 0.7098039215686275, 0.803921568627451)]
 
+    all_phase0 = (dates[0] - dates[0][0]) + phase*(1+z)
+    all_phase1 = (dates[1] - dates[1][0]) + phase*(1+z)
+    all_phase2 = (dates[2] - dates[2][0]) + phase*(1+z)
     plt.figure(figsize=(3, 9))
     gs1 = gridspec.GridSpec(3, 9)
     gs1.update(wspace=0.025, hspace=0.05)
@@ -213,8 +216,8 @@ def plot_Ibc(z, hostebv_Ibc, data_flux_filter1, data_flux_filter1_err,
 
     for i in range(len(model_Ibc)):
         ax1.plot(lightcurve_00[model_Ibc[i]][1], lightcurve_00[model_Ibc[i]][0])
-        ax1.errorbar(phase, data_flux_filter1, xerr=0,
-                     yerr=data_flux_filter1_err, fmt='--o', c='k')
+        ax1.errorbar(all_phase0, data_flux_filter1, xerr=0,
+                     yerr=data_flux_filter1_err, fmt='o', c='k')
 
     ax1.set_ylabel('Flux (counts/s)', size=14)
     ax1.set_title('F140W', size=14)
@@ -224,8 +227,8 @@ def plot_Ibc(z, hostebv_Ibc, data_flux_filter1, data_flux_filter1_err,
 
     for i in range(len(model_Ibc)):
         ax2.plot(lightcurve_10[model_Ibc[i]][1], lightcurve_10[model_Ibc[i]][0])
-        ax2.errorbar(phase, data_flux_filter2, xerr=0,
-                     yerr=data_flux_filter2_err, fmt='--o',
+        ax2.errorbar(all_phase1, data_flux_filter2, xerr=0,
+                     yerr=data_flux_filter2_err, fmt='o',
                      c='k')
     ax2.set_title('F105W', size=14)
     ax2.annotate('Type Ibc', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
@@ -234,8 +237,8 @@ def plot_Ibc(z, hostebv_Ibc, data_flux_filter1, data_flux_filter1_err,
 
     for i in range(len(model_Ibc)):
         ax3.plot(lightcurve_20[model_Ibc[i]][1], lightcurve_20[model_Ibc[i]][0])
-        ax3.errorbar(phase, data_flux_filter3, xerr=0,
-                     yerr=data_flux_filter3_err, fmt='--o',
+        ax3.errorbar(all_phase2, data_flux_filter3, xerr=0,
+                     yerr=data_flux_filter3_err, fmt='o',
                      c='k')
     ax3.set_title('F814.UVIS', size=14)
     ax3.annotate('Type Ibc', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
@@ -246,7 +249,8 @@ def plot_Ibc(z, hostebv_Ibc, data_flux_filter1, data_flux_filter1_err,
     fig.set_size_inches(18.5, 12.5)
 
 
-def plot_II(z, hostebv_II, data_flux_filter1, data_flux_filter1_err,
+
+def plot_II(z, hostebv_II, filters, dates, data_flux_filter1, data_flux_filter1_err,
             data_flux_filter2, data_flux_filter2_err,
             data_flux_filter3, data_flux_filter3_err, phase):
     model_II = ['s11-2005lc', 's11-2005gi', 's11-2006jl', 'nugent-sn2p',
@@ -267,6 +271,10 @@ def plot_II(z, hostebv_II, data_flux_filter1, data_flux_filter1_err,
     #          (0.8, 0.7254901960784313, 0.4549019607843137),
     #          (0.39215686274509803, 0.7098039215686275, 0.803921568627451)]
 
+    all_phase0 = (dates[0] - dates[0][0]) + phase*(1+z)
+    all_phase1 = (dates[1] - dates[1][0]) + phase*(1+z)
+    all_phase2 = (dates[2] - dates[2][0]) + phase*(1+z)
+
     plt.figure(figsize=(3, 9))
     gs1 = gridspec.GridSpec(3, 9)
     gs1.update(wspace=0.025, hspace=0.05)
@@ -280,8 +288,8 @@ def plot_II(z, hostebv_II, data_flux_filter1, data_flux_filter1_err,
 
     for i in range(len(model_II)):
         ax1.plot(lightcurve_00[model_II[i]][1], lightcurve_00[model_II[i]][0])
-        ax1.errorbar(phase, data_flux_filter1, xerr=0,
-                     yerr=data_flux_filter1_err, fmt='--o',
+        ax1.errorbar(all_phase0, data_flux_filter1, xerr=0,
+                     yerr=data_flux_filter1_err, fmt='o',
                      c='k')
 
     ax1.set_ylabel('Flux (counts/s)', size=14)
@@ -292,8 +300,8 @@ def plot_II(z, hostebv_II, data_flux_filter1, data_flux_filter1_err,
 
     for i in range(len(model_II)):
         ax2.plot(lightcurve_10[model_II[i]][1], lightcurve_10[model_II[i]][0])
-        ax2.errorbar(phase, data_flux_filter2, xerr=0,
-                     yerr=data_flux_filter2_err, fmt='--o',
+        ax2.errorbar(all_phase1, data_flux_filter2, xerr=0,
+                     yerr=data_flux_filter2_err, fmt='o',
                      c='k')
     ax2.set_title('F105W', size=14)
     ax2.annotate('Type II', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
@@ -302,8 +310,8 @@ def plot_II(z, hostebv_II, data_flux_filter1, data_flux_filter1_err,
 
     for i in range(len(model_II)):
         ax3.plot(lightcurve_20[model_II[i]][1], lightcurve_20[model_II[i]][0])
-        ax3.errorbar(phase, data_flux_filter3, xerr=0,
-                     yerr=data_flux_filter3_err, fmt='--o',
+        ax3.errorbar(all_phase2, data_flux_filter3, xerr=0,
+                     yerr=data_flux_filter3_err, fmt='o',
                      c='k')
     ax3.set_title('F184W.UVIS', size=14)
     ax3.annotate('Type II', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
@@ -312,3 +320,4 @@ def plot_II(z, hostebv_II, data_flux_filter1, data_flux_filter1_err,
 
     fig = plt.gcf()
     fig.set_size_inches(18.5, 12.5)
+
