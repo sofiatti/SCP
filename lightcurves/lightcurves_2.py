@@ -8,10 +8,10 @@ t0 = 0
 hostr_v = 3.1
 dust = sncosmo.CCM89Dust()
 
-zero_point = {'f105w_wfc3ir': 26.235, 'f140w_wfc3ir': 26.437, 'f160w': 25.921,
-              'f814w_wfc3uvis': 25.0985, 'zpsys': 'ab'}
+zero_point = {'f105w': 26.235, 'f140w': 26.437, 'f160w': 25.921,
+              'uvf814w': 25.0985, 'zpsys': 'ab'}
 
-
+'''
 def filter2bandpass(filter_file):
     """Returns the sncosmo bandpass for an HST filter"""
     filter = np.loadtxt(filter_file)
@@ -25,6 +25,7 @@ def filter2bandpass(filter_file):
 f105w_wfc3ir = filter2bandpass('f105w_wfc3ir.dat')
 f140w_wfc3ir = filter2bandpass('f140w_wfc3ir.dat')
 f814w_wfc3uvis = filter2bandpass('f814w_wfc3uvis.dat')
+'''
 
 
 def lightcurve_Ia(filter, z, x1, c):
@@ -35,7 +36,6 @@ def lightcurve_Ia(filter, z, x1, c):
     zpsys = zero_point['zpsys']
     model_Ia = sncosmo.Model(source=sncosmo.get_source('salt2',
                                                        version='2.4'))
-
     alpha = 0.12
     beta = 3.
     mabs = -19.1 - alpha*x1 + beta*c
@@ -49,8 +49,8 @@ def lightcurve_Ia(filter, z, x1, c):
     values = [phase_array, obsflux_Ia]
     dict_Ia = dict(zip(keys, values))
     np.savetxt('test.dat', np.c_[dict_Ia['phase_array'], dict_Ia['obsflux']])
-    x0 = model_Ia.get('x0')
-    print x0
+    #x0 = model_Ia.get('x0')
+    #print x0
     return (dict_Ia)
 
 
@@ -132,9 +132,14 @@ def lightcurve_II(filter, z, hostebv_II):
     return (dict_II)
 
 
-def plot_Ia(z, x1, c, data_flux_filter1, data_flux_filter1_err,
+def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
             data_flux_filter2, data_flux_filter2_err,
             data_flux_filter3, data_flux_filter3_err, phase):
+
+    all_phase0 = (dates[0] - dates[0][0] + phase)/(1+z)
+    all_phase1 = (dates[1] - dates[1][0] + phase)/(1+z)
+    all_phase2 = (dates[2] - dates[2][0] + phase)/(1+z)
+
     plt.figure(figsize=(3, 9))
     gs1 = gridspec.GridSpec(3, 9)
     gs1.update(wspace=0.025, hspace=0.05)
@@ -142,31 +147,34 @@ def plot_Ia(z, x1, c, data_flux_filter1, data_flux_filter1_err,
     ax2 = plt.subplot2grid((3, 3), (0, 1))
     ax3 = plt.subplot2grid((3, 3), (0, 2))
 
-    lightcurve_00 = lightcurve_Ia('f140w', z, x1, c)
-    lightcurve_10 = lightcurve_Ia('f105w', z, x1, c)
-    lightcurve_20 = lightcurve_Ia('uvf814w', z, x1, c)
+    lightcurve_00 = lightcurve_Ia(filters[0], z, x1, c)
+    lightcurve_10 = lightcurve_Ia(filters[1], z, x1, c)
+    lightcurve_20 = lightcurve_Ia(filters[2], z, x1, c)
 
     ax1.plot(lightcurve_00['phase_array'], lightcurve_00['obsflux'])
-    ax1.errorbar(phase, data_flux_filter1, xerr=0, yerr=data_flux_filter1_err,
-                 fmt='--o', c='k')
+    ax1.errorbar(all_phase0, data_flux_filter1, xerr=0, yerr=data_flux_filter1_err,
+                 fmt='o', c='k')
     ax1.set_ylabel('Flux (counts/s)', size=14)
-    ax1.set_title('F140W', size=14)
+    ax1_title = filters[0].upper()
+    ax1.set_title(ax1_title, size=14)
     ax1.annotate('Type Ia', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
     ax1.annotate('z=%.2f' % z, xy=(0.75, 0.75), xycoords='axes fraction',
                  size=14)
 
     ax2.plot(lightcurve_10['phase_array'], lightcurve_10['obsflux'])
-    ax2.errorbar(phase, data_flux_filter2, xerr=0, yerr=data_flux_filter2_err,
-                 fmt='--o', c='k')
-    ax2.set_title('F105W', size=14)
+    ax2.errorbar(all_phase1, data_flux_filter2, xerr=0, yerr=data_flux_filter2_err,
+                 fmt='o', c='k')
+    ax2_title = filters[1].upper()
+    ax2.set_title(ax2_title, size=14)
     ax2.annotate('Type Ia', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
     ax2.annotate('z=%.2f' % z, xy=(0.75, 0.75), xycoords='axes fraction',
                  size=14)
 
     ax3.plot(lightcurve_20['phase_array'], lightcurve_20['obsflux'])
-    ax3.errorbar(phase, data_flux_filter3, xerr=0, yerr=data_flux_filter3_err,
-                 fmt='--o', c='k')
-    ax3.set_title('F814W.UVIS', size=14)
+    ax3.errorbar(all_phase2, data_flux_filter3, xerr=0, yerr=data_flux_filter3_err,
+                 fmt='o', c='k')
+    ax3_title = filters[2].upper()
+    ax3.set_title(ax3_title, size=14)
     ax3.annotate('Type Ia', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
     ax3.annotate('z=%.2f' % z, xy=(0.75, 0.75), xycoords='axes fraction',
                  size=14)
@@ -229,7 +237,7 @@ def plot_Ibc(z, hostebv_Ibc, data_flux_filter1, data_flux_filter1_err,
         ax3.errorbar(phase, data_flux_filter3, xerr=0,
                      yerr=data_flux_filter3_err, fmt='--o',
                      c='k')
-    ax3.set_title('F184.UVIS', size=14)
+    ax3.set_title('F814.UVIS', size=14)
     ax3.annotate('Type Ibc', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
     ax3.annotate('z=%.2f' % z, xy=(0.75, 0.75), xycoords='axes fraction',
                  size=14)
