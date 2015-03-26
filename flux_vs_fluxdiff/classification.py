@@ -1,4 +1,4 @@
-import glob
+import glob 
 import pandas as pd
 import copy
 import gzip
@@ -49,7 +49,7 @@ def make_csv(my_dir, file_dir, filter1, filter2, filter3, z):
                              type_II_flux_filter3))
 
     np.savetxt('new_data.csv', np.transpose([flux_filter1, flux_filter2,
-               flux_filter3]), delimiter=',', header='Flux 105, Flux 140, Flux uv814')
+               flux_filter3]), delimiter=',', header='Flux filter1, Flux filter2, Flux filter3')
 
 # Read in data generated using sncosmo and assign the correct SN Type to each
 # instance
@@ -90,13 +90,12 @@ def obtain_proba(files_dir, flux_filter1, flux_filter2, flux_filter3):
     return(proba)
 
 
-def make_pdf_z_file(my_dir, file_dir, filter1, flux_filter1, flux_filter2,
-                    flux_filter3):
+def make_pdf_z_file(my_dir, file_dir, filter1, filter2, filter3, flux_filter1, flux_filter2, flux_filter3):
     files = []
     z = []
     pdf = []
-    files.append(glob.glob(my_dir + file_dir + '*' + filter1 + '*.gz'))
-
+    my_files = glob.glob(my_dir + file_dir + '*' + filter1 + '*.gz')
+    files.append(sorted(my_files))
     for a in files[0]:
         min_index = a.index('/z') + 2
         z.append(a[min_index:min_index + 3])
@@ -105,7 +104,7 @@ def make_pdf_z_file(my_dir, file_dir, filter1, flux_filter1, flux_filter2,
 
     z = range(55, 205, 5)
     for i in range(len(files[0])):
-        make_csv(my_dir, file_dir, 'f105w', 'f140w', 'uvf814w', z[i])
+        make_csv(my_dir, file_dir, filter1, filter2, filter3, z[i])
         pdf.append(obtain_proba(file_dir, flux_filter1, flux_filter2, flux_filter3)[0])
 
     return(pdf, my_z)
