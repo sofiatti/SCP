@@ -4,6 +4,7 @@ import copy
 import gzip
 import cPickle
 import numpy as np
+import math
 from sklearn.ensemble import RandomForestClassifier
 
 
@@ -15,9 +16,16 @@ def load(filename):
     return object
 
 
-def make_csv(filename_filter1, filename_filter2):
-    dict_filter1 = load(filename_filter1)
-    dict_filter2 = load(filename_filter2)
+def make_csv(my_dir, file_dir, filter1, filter2, filter3, z):
+    file_z = str(z)
+    if len(file_z) < 3:
+        file_z = '0' + file_z
+    dict_filter1 = load(my_dir + file_dir + 'z' + file_z + '_' + filter1 +
+                        '_mc.gz')
+    dict_filter2 = load(my_dir + file_dir + 'z' + file_z + '_' + filter2 +
+                        '_mc.gz')
+    dict_filter3 = load(my_dir + file_dir + 'z' + file_z + '_' + filter3 +
+                        '_mc.gz')
 
     type_Ia_flux_filter1 = dict_filter1['type_Ia_flux']
     type_Ibc_flux_filter1 = dict_filter1['type_Ibc_flux']
@@ -27,20 +35,21 @@ def make_csv(filename_filter1, filename_filter2):
     type_Ibc_flux_filter2 = dict_filter2['type_Ibc_flux']
     type_II_flux_filter2 = dict_filter2['type_II_flux']
 
-    type_Ia_flux_diff = np.subtract(type_Ia_flux_filter2, type_Ia_flux_filter1)
-    type_Ibc_flux_diff = np.subtract(type_Ibc_flux_filter2,
-                                     type_Ibc_flux_filter1)
-    type_II_flux_diff = np.subtract(type_II_flux_filter2,
-                                    type_II_flux_filter1)
+    type_Ia_flux_filter3 = dict_filter3['type_Ia_flux']
+    type_Ibc_flux_filter3 = dict_filter3['type_Ibc_flux']
+    type_II_flux_filter3 = dict_filter3['type_II_flux']
 
-    flux = np.hstack((type_Ia_flux_filter1, type_Ibc_flux_filter1,
-                     type_II_flux_filter1))
-    flux_diff = np.hstack((type_Ia_flux_diff, type_Ibc_flux_diff,
-                          type_II_flux_diff))
+    flux_filter1 = np.hstack((type_Ia_flux_filter1, type_Ibc_flux_filter1,
+                             type_II_flux_filter1))
 
-    np.savetxt('data.csv', np.transpose([flux_diff, flux]), delimiter=',',
-               header='Type Ia Flux Diff,Type Ia Flux')
+    flux_filter2 = np.hstack((type_Ia_flux_filter2, type_Ibc_flux_filter2,
+                              type_II_flux_filter2))
 
+    flux_filter3 = np.hstack((type_Ia_flux_filter3, type_Ibc_flux_filter3,
+                             type_II_flux_filter3))
+
+    np.savetxt('new_data.csv', np.transpose([flux_filter1, flux_filter2,
+               flux_filter3]), delimiter=',', header='Flux 105, Flux 140, Flux uv814')
 
 # Read in data generated using sncosmo and assign the correct SN Type to each
 # instance
@@ -66,11 +75,9 @@ def read_data(files_dir, filename):
     return X, Y
 
 
-def obtain_proba(files_dir, flux_filter1, flux_filter2):
-    my_flux_diff = flux_filter2 - flux_filter1
-    my_flux = flux_filter1
+def obtain_proba(files_dir, flux_filter1, flux_filter2, flux_filter3):
 
-    X, Y = read_data(files_dir, 'data.csv')
+    X, Y = read_data(files_dir, 'new_data.csv')
 
     Y[Y == "Type Ia"] = 0
     Y[Y == "Type Ibc"] = 1
@@ -79,17 +86,16 @@ def obtain_proba(files_dir, flux_filter1, flux_filter2):
 
     clf = RandomForestClassifier(n_estimators=200, oob_score=True)
     rfc = clf.fit(X, Y)
-    proba = rfc.predict_proba([my_flux, my_flux_diff])
+    proba = rfc.predict_proba([flux_filter1, flux_filter2, flux_filter3])
     return(proba)
 
 
-def make_pdf_z_file(my_dir, files_dir, filter1, filter2, flux_filter1,
-                    flux_filter2):
+def make_pdf_z_file(my_dir, file_dir, filter1, flux_filter1, flux_filter2,
+                    flux_filter3):
     files = []
     z = []
     pdf = []
-    files.append(glob.glob(my_dir + files_dir + '*' + filter1 + '*.gz'))
-    files.append(glob.glob(my_dir + files_dir + '*' + filter2 + '*.gz'))
+    files.append(glob.glob(my_dir + file_dir + '*' + filter1 + '*.gz'))
 
     for a in files[0]:
         min_index = a.index('/z') + 2
@@ -97,9 +103,14 @@ def make_pdf_z_file(my_dir, files_dir, filter1, filter2, flux_filter1,
     my_z = np.asarray(z, dtype=float)
     my_z = np.divide(my_z, 100)
 
+    z = range(55, 205, 5)
     for i in range(len(files[0])):
-        make_csv(files[0][i], files[1][i])
-        pdf.append(obtain_proba(files_dir, flux_filter1, flux_filter2)[0])
+        make_csv(my_dir, file_dir, 'f105w', 'f140w', 'uvf814w', z[i])
+        pdf.append(obtain_proba(file_dir, flux_filter1, flux_filter2, flux_filter3)[0])
+
+    return(pdf, my_z)
+
+'''    
     np.savetxt(my_dir + files_dir + 'pdf_' + filter1 + '_' + filter2 + '.dat',
                np.transpose(pdf), header='Type Ia - Type Ib/c - Type II')
     np.savetxt(my_dir + files_dir + 'z_' + filter1 + '_' + filter2 +
@@ -122,4 +133,4 @@ for files_dir in all_files_dir:
     make_pdf_z_file(my_dir, files_dir, all_filters[1], all_filters[2],
                     all_fluxes[1], all_fluxes[2])
     print 'done'
-           
+'''
